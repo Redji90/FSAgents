@@ -1,0 +1,17 @@
+# Конфигурация для телеграмм-бота по фигурному катанию
+
+bot:
+  token: "YOUR_BOT_TOKEN_HERE"
+  admin_id: "YOUR_ADMIN_ID_HERE"
+
+database:
+  uri: "DATABASE_CONNECTION_URI_HERE"
+  name: "figure_skating_db"
+
+llm:
+  api_key: "YOUR_LLM_API_KEY_HERE"
+  endpoint: "YOUR_LLM_ENDPOINT_HERE"
+
+analytics:
+  season_start: "2023-01-01"
+  season_end: "2023-12-31"
