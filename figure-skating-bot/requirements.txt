@@ -7,3 +7,6 @@ sqlalchemy==2.0.21
 python-dotenv==1.0.0
 aiogram==3.1.1
 pyyaml==6.0.1
+pytest==7.4.3
+pytest-asyncio==0.21.1
+fpdf==1.7.2

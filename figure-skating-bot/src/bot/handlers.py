@@ -24,24 +24,36 @@ def handle_pdf(update: Update, context: CallbackContext) -> None:
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
-from .keyboards import get_main_keyboard, get_analytics_keyboard
-from ..analytics.processor import analyze_results
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from ..pdf.extractor import PDFResultExtractor
+from ..analytics.processor import analyze_results
+from ..llm.client import LLMClient
 from ..database.crud import create_competition, get_competitions
+from .keyboards import get_main_keyboard, get_analytics_keyboard
+import logging
 
+logger = logging.getLogger(__name__)
 router = Router()
+llm_client = LLMClient()
+
+class AnalyticsStates(StatesGroup):
+    waiting_for_competition = State()
+    waiting_for_analysis_type = State()
 
 @router.message(Command("start"))
 async def cmd_start(message: Message):
     await message.answer(
-        "Добро пожаловать! Я помогу проанализировать результаты соревнований по фигурному катанию.",
+        "Добро пожаловать в бот анализа результатов фигурного катания!\n"
+        "Используйте меню для навигации.",
         reply_markup=get_main_keyboard()
     )
 
 @router.message(F.text == "Загрузить протокол")
 async def handle_upload_request(message: Message):
     await message.answer(
-        "Пожалуйста, отправьте PDF файл с протоколом соревнований."
+        "Отправьте PDF файл с протоколом соревнований.\n"
+        "Поддерживаются официальные протоколы ISU.",
     )
 
 @router.message(F.document)
@@ -51,21 +63,62 @@ async def handle_pdf(message: Message):
         return
     
     try:
-        # Скачивание и обработка PDF
+        await message.answer("Обрабатываю протокол...")
+        
+        # Скачивание файла
         file = await message.bot.get_file(message.document.file_id)
         file_path = f"temp/{message.document.file_name}"
         await message.bot.download_file(file.file_path, file_path)
         
+        # Обработка PDF
         extractor = PDFResultExtractor(file_path)
-        competition_data = extractor.process_document()
+        data = extractor.process_document()
         
-        # Сохранение в базу данных
-        db_competition = await create_competition(competition_data)
+        # Сохранение в БД
+        competition = await create_competition(data["competition"])
+        
+        # Анализ через LLM
+        initial_analysis = await llm_client.analyze_competition_results(data["results"])
         
         await message.answer(
-            f"Протокол обработан успешно!\n"
-            f"Соревнование: {db_competition.name}\n"
-            f"Дата: {db_competition.date}"
+            f"✅ Протокол обработан успешно!\n\n"
+            f"Соревнование: {competition.name}\n"
+            f"Дата: {competition.date}\n\n"
+            f"Краткий анализ:\n{initial_analysis}",
+            reply_markup=get_analytics_keyboard()
         )
+        
     except Exception as e:
-        await message.answer(f"Произошла ошибка при обработке файла: {str(e)}")
+        logger.error(f"Ошибка при обработке PDF: {e}")
+        await message.answer("Произошла ошибка при обработке файла. Попробуйте другой файл.")
+    finally:
+        # Очистка временных файлов
+        import os
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+@router.callback_query(F.data.startswith("analytics_"))
+async def handle_analytics(callback: CallbackQuery, state: FSMContext):
+    analysis_type = callback.data.split("_")[1]
+    
+    try:
+        competitions = await get_competitions()
+        if not competitions:
+            await callback.message.answer("Нет доступных соревнований для анализа.")
+            return
+            
+        await state.set_state(AnalyticsStates.waiting_for_competition)
+        await state.update_data(analysis_type=analysis_type)
+        
+        competitions_text = "\n".join(
+            f"{i}. {comp.name} ({comp.date})"
+            for i, comp in enumerate(competitions, 1)
+        )
+        
+        await callback.message.answer(
+            f"Выберите соревнование (введите номер):\n\n{competitions_text}"
+        )
+        
+    except Exception as e:
+        logger.error(f"Ошибка при получении списка соревнований: {e}")
+        await callback.message.answer("Произошла ошибка. Попробуйте позже.")
