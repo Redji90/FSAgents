@@ -4,8 +4,6 @@ import logging
 from aiogram import Bot, Dispatcher
 from dotenv import load_dotenv
 import os
-from bot.handlers import router
-from database.database import init_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,10 +17,10 @@ bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 dp = Dispatcher()
 
 async def main():
-    # Инициализация базы данных
-    await init_db()
+    from bot.handlers import router
+    from database.database import init_db
     
-    # Регистрация роутеров
+    await init_db()
     dp.include_router(router)
     
     logger.info("Бот запущен")
