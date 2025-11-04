@@ -1,11 +1,16 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
-# Создание кнопок для клавиатуры
-button_start = KeyboardButton("Начать")
-button_results = KeyboardButton("Результаты")
-button_analytics = KeyboardButton("Аналитика")
-button_help = KeyboardButton("Помощь")
+def get_main_keyboard() -> ReplyKeyboardMarkup:
+    keyboard = [
+        [KeyboardButton(text="Загрузить протокол")],
+        [KeyboardButton(text="Анализ результатов")],
+        [KeyboardButton(text="Статистика")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
-# Создание основной клавиатуры
-main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-main_keyboard.add(button_start, button_results, button_analytics, button_help)
+def get_analytics_keyboard() -> InlineKeyboardMarkup:
+    keyboard = [
+        [InlineKeyboardButton(text="По спортсменам", callback_data="analytics_by_skater")],
+        [InlineKeyboardButton(text="По соревнованиям", callback_data="analytics_by_competition")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
