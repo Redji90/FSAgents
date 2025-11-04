@@ -1,25 +1,35 @@
 import PyPDF2
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List
 import logging
 from datetime import datetime
+import os
 
 logger = logging.getLogger(__name__)
 
 class PDFResultExtractor:
     def __init__(self, file_path: str):
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Файл не найден: {file_path}")
         self.file_path = file_path
 
     def process_document(self) -> Dict:
         """Основной метод обработки документа"""
-        text = self._extract_text()
-        competition_info = self._extract_competition_info(text)
-        results = self._extract_results(text)
-        
-        return {
-            "competition": competition_info,
-            "results": results
-        }
+        try:
+            text = self._extract_text()
+            competition_info = self._extract_competition_info(text)
+            results = self._extract_results(text)
+            
+            if not competition_info or not results:
+                raise ValueError("Не удалось извлечь данные из документа")
+                
+            return {
+                "competition": competition_info,
+                "results": results
+            }
+        except Exception as e:
+            logger.error(f"Ошибка при обработке документа: {e}")
+            raise
 
     def _extract_text(self) -> str:
         """Извлекает текст из PDF файла"""

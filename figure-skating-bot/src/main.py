@@ -7,14 +7,14 @@ import os
 from bot.handlers import router
 from database.database import init_db
 
-# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Загрузка переменных окружения
 load_dotenv()
 
-# Инициализация бота
+if not os.getenv("TELEGRAM_BOT_TOKEN"):
+    raise ValueError("Не установлен TELEGRAM_BOT_TOKEN в .env файле")
+
 bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 dp = Dispatcher()
 
@@ -25,7 +25,6 @@ async def main():
     # Регистрация роутеров
     dp.include_router(router)
     
-    # Запуск бота
     logger.info("Бот запущен")
     await dp.start_polling(bot)
 
