@@ -1,20 +1,29 @@
 # main.py
+import asyncio
 import logging
-from bot import handlers
-from aiogram import Bot, Dispatcher, executor
-from config import config
+from aiogram import Bot, Dispatcher
+from dotenv import load_dotenv
+import os
 
-API_TOKEN = config['API_TOKEN']
+# Загрузка переменных окружения
+load_dotenv()
 
-# Configure logging
+# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
-# Initialize bot and dispatcher
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+# Инициализация бота и диспетчера
+bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
+dp = Dispatcher()
 
-# Register handlers
-handlers.register_handlers(dp)
+async def main():
+    # Импорт обработчиков
+    from bot.handlers import router
+    
+    # Регистрация роутера
+    dp.include_router(router)
+    
+    # Запуск бота
+    await dp.start_polling(bot)
 
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+if __name__ == "__main__":
+    asyncio.run(main())

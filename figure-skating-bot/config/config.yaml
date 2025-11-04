@@ -1,16 +1,27 @@
 # Конфигурация для телеграмм-бота по фигурному катанию
 
 bot:
+  name: "Figure Skating Analytics Bot"
+  description: "Бот для анализа результатов по фигурному катанию"
   token: "YOUR_BOT_TOKEN_HERE"
   admin_id: "YOUR_ADMIN_ID_HERE"
 
 database:
   uri: "DATABASE_CONNECTION_URI_HERE"
   name: "figure_skating_db"
+  url: "sqlite:///./figure_skating.db"
 
 llm:
   api_key: "YOUR_LLM_API_KEY_HERE"
   endpoint: "YOUR_LLM_ENDPOINT_HERE"
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 500
+
+pdf:
+  temp_dir: "./temp"
+  supported_formats:
+    - "application/pdf"
 
 analytics:
   season_start: "2023-01-01"
