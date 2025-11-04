@@ -1,29 +1,51 @@
-# stats.py
+from typing import List, Dict
+import pandas as pd
+from ..database.models import Result, Competition, Skater
 
-def calculate_average_score(scores):
-    """Calculate the average score from a list of scores."""
-    if not scores:
-        return 0
-    return sum(scores) / len(scores)
+class StatsCalculator:
+    @staticmethod
+    def calculate_skater_stats(results: List[Result]) -> Dict:
+        """Рассчитывает статистику для конкретного фигуриста"""
+        df = pd.DataFrame([
+            {
+                "competition": r.competition.name,
+                "date": r.competition.date,
+                "short_program": r.short_program_score,
+                "free_program": r.free_program_score,
+                "total": r.total_score,
+                "rank": r.rank
+            }
+            for r in results
+        ])
 
-def calculate_highest_score(scores):
-    """Return the highest score from a list of scores."""
-    if not scores:
-        return 0
-    return max(scores)
+        return {
+            "competitions_count": len(df),
+            "average_total": df["total"].mean(),
+            "best_result": {
+                "score": df["total"].max(),
+                "competition": df.loc[df["total"].idxmax(), "competition"]
+            },
+            "average_rank": df["rank"].mean(),
+            "progress": {
+                "short_program": df["short_program"].diff().mean(),
+                "free_program": df["free_program"].diff().mean()
+            }
+        }
 
-def calculate_lowest_score(scores):
-    """Return the lowest score from a list of scores."""
-    if not scores:
-        return 0
-    return min(scores)
+    @staticmethod
+    def get_season_summary(results: List[Result]) -> Dict:
+        """Формирует сводку за сезон"""
+        competitions = pd.DataFrame([
+            {
+                "name": r.competition.name,
+                "date": r.competition.date,
+                "total_participants": len(r.competition.results)
+            }
+            for r in results
+        ])
 
-def calculate_score_distribution(scores):
-    """Calculate the distribution of scores."""
-    distribution = {}
-    for score in scores:
-        if score in distribution:
-            distribution[score] += 1
-        else:
-            distribution[score] = 1
-    return distribution
+        return {
+            "total_competitions": len(competitions),
+            "participants_average": competitions["total_participants"].mean(),
+            "season_timeline": competitions.to_dict(orient="records")
+        }

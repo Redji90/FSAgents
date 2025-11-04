@@ -1,5 +1,5 @@
 from aiogram.types import (
-    ReplyKeyboardMarkup,
+    ReplyKeyboardMarkup, 
     KeyboardButton,
     InlineKeyboardMarkup,
     InlineKeyboardButton
@@ -26,14 +26,8 @@ def get_analytics_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(
-                text="Сравнение с прошлыми",
+                text="Сравнительный анализ",
                 callback_data="analytics_compare"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                text="Статистика выступлений",
-                callback_data="analytics_stats"
             )
         ]
     ]
